@@ -19,7 +19,15 @@ export function createRpcFromEnv(env: Env) {
     const fail = async (): Promise<HttpResponse> => ({ status: 503, body: { ok: false, error: 'AUTH_SECRET debe tener al menos 24 caracteres' } });
     return { handleRpc: fail, handleCron: fail };
   }
-  const cfg = { url: env.SUPABASE_URL as string, key: env.SUPABASE_SERVICE_KEY as string };
+  // Acepta la URL con o sin rutas extra (p. ej. "https://x.supabase.co/rest/v1/"): solo importa el origen.
+  let origin: string;
+  try {
+    origin = new URL((env.SUPABASE_URL as string).trim()).origin;
+  } catch {
+    const fail = async (): Promise<HttpResponse> => ({ status: 503, body: { ok: false, error: 'SUPABASE_URL no es una URL válida' } });
+    return { handleRpc: fail, handleCron: fail };
+  }
+  const cfg = { url: origin, key: (env.SUPABASE_SERVICE_KEY as string).trim() };
 
   return createRpc({
     collection: <T extends Entity>(name: string): Collection<T> => new SupabaseCollection<T>(cfg, name),

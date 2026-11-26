@@ -11,7 +11,10 @@ import { createServices, type Services } from './services';
 import { createRemoteServices, remoteAuth } from './remote';
 import { setToken, type AuthApi } from './auth';
 
-export const backend: 'local' | 'remote' = import.meta.env.VITE_BACKEND === 'remote' ? 'remote' : 'local';
+// Lo que diga VITE_BACKEND manda. Si no está definido: el sitio publicado usa el servidor y el
+// desarrollo usa el navegador. Así un despliegue sin la variable nunca arranca por error en modo demo.
+const forced = import.meta.env.VITE_BACKEND as string | undefined;
+export const backend: 'local' | 'remote' = forced === 'local' || forced === 'remote' ? forced : import.meta.env.PROD ? 'remote' : 'local';
 const clock = systemClock;
 
 function buildLocal() {

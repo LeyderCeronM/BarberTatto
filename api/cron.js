@@ -1178,7 +1178,14 @@ function createRpcFromEnv(env) {
     const fail2 = async () => ({ status: 503, body: { ok: false, error: "AUTH_SECRET debe tener al menos 24 caracteres" } });
     return { handleRpc: fail2, handleCron: fail2 };
   }
-  const cfg = { url: env.SUPABASE_URL, key: env.SUPABASE_SERVICE_KEY };
+  let origin;
+  try {
+    origin = new URL(env.SUPABASE_URL.trim()).origin;
+  } catch {
+    const fail2 = async () => ({ status: 503, body: { ok: false, error: "SUPABASE_URL no es una URL v\xE1lida" } });
+    return { handleRpc: fail2, handleCron: fail2 };
+  }
+  const cfg = { url: origin, key: env.SUPABASE_SERVICE_KEY.trim() };
   return createRpc({
     collection: (name) => new SupabaseCollection(cfg, name),
     secret: env.AUTH_SECRET,
